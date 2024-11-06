@@ -12,25 +12,21 @@ struct BagTree(HashMap<BagType, Vec<(usize, BagType)>>);
 
 fn parse_input(input: &str) -> BagTree {
     let bag_type = parser!(
-        word1:string(lower+) " " word2:string(lower+)
-        => BagType(word1, word2)
+        word1:string(lower+) " " word2:string(lower+) => BagType(word1, word2)
     );
 
     let bag_or_bags = parser!({"bag", "bags"});
 
     let single_content = parser!(
-        count:usize " " t:bag_type " " bag_or_bags
-        => (count, t)
+        count:usize " " t:bag_type " " bag_or_bags => (count, t)
     );
     let all_content = parser!({
         repeat_sep(single_content,", "),
         "no other bags" => vec![]
-    }
-    "." );
+    } "." );
 
     let line_parser = parser!(
-        main:bag_type " " bag_or_bags " contain "
-        contents:all_content => (main, contents)
+        main:bag_type " bags contain " contents:all_content => (main, contents)
     );
 
     let p = parser!(hash_map(lines(line_parser)));

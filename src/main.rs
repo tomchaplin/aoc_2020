@@ -27,7 +27,7 @@ pub fn main() {
     if args.len() == 1 {
         for i in 1..=25 {
             println!("Day {}", i);
-            let run_code = RunCode::init_run_all(i as u32);
+            let run_code = RunCode::init_run_all(i);
             let solution = run_code.run();
             print_solution(&solution);
             if solution.is_err() {

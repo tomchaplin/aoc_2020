@@ -8,7 +8,7 @@ use crate::days;
 
 pub enum AocRunError {
     NoFile(String),
-    UnregistedProblem(u32),
+    UnregistedProblem(usize),
     BadRunCode(String),
 }
 
@@ -27,23 +27,23 @@ impl Display for AocRunError {
 
 #[derive(Debug)]
 pub struct RunCode<const SOLVED: bool> {
-    problem: u32,
+    problem: usize,
     run_a: bool,
     run_b: bool,
+    as_example: bool,
     result_a: Option<String>,
     result_b: Option<String>,
-    as_example: bool,
 }
 
 impl RunCode<false> {
-    pub fn init_run_all(problem: u32) -> Self {
+    pub fn init_run_all(problem: usize) -> Self {
         Self {
             problem,
             run_a: true,
             run_b: true,
+            as_example: false,
             result_a: None,
             result_b: None,
-            as_example: false,
         }
     }
 }
@@ -59,7 +59,7 @@ impl FromStr for RunCode<false> {
              "" => (true, true)
         });
         let example_parser = parser!({"e" => true, "" => false});
-        let code_parser = parser!(example_parser u32 ab_parser);
+        let code_parser = parser!(example_parser usize ab_parser);
         let (as_example, problem, (run_a, run_b)) = code_parser
             .parse(s)
             .map_err(|_err| AocRunError::BadRunCode(s.to_string()))?;
@@ -67,9 +67,9 @@ impl FromStr for RunCode<false> {
             problem,
             run_a,
             run_b,
+            as_example,
             result_a: None,
             result_b: None,
-            as_example,
         })
     }
 }
@@ -95,9 +95,9 @@ impl RunCode<false> {
             problem: self.problem,
             run_a: self.run_a,
             run_b: self.run_b,
+            as_example: self.as_example,
             result_a,
             result_b,
-            as_example: self.as_example,
         })
     }
 }

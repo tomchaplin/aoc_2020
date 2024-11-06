@@ -27,7 +27,7 @@ mod day23;
 mod day24;
 mod day25;
 
-pub fn get_solution(problem: u32) -> Result<Box<dyn ProblemSolution>, AocRunError> {
+pub fn get_solution(problem: usize) -> Result<Box<dyn ProblemSolution>, AocRunError> {
     match problem {
         01 => Ok(Box::new(day01::Solution {})),
         02 => Ok(Box::new(day02::Solution {})),
