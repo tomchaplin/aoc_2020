@@ -41,7 +41,8 @@ impl PasswordLine {
 
 fn get_lines(input: &str) -> impl Iterator<Item = PasswordLine> {
     let p = parser!(lines(
-        min:usize "-" max:usize " " character:lower ": " password:lower+ => PasswordLine { min , max, character, password}
+        min:usize "-" max:usize " " character:lower ": " password:lower+
+        => PasswordLine { min , max, character, password }
     ));
     p.parse(input).unwrap().into_iter()
 }
