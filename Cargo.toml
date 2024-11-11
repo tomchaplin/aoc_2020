@@ -6,4 +6,5 @@ edition = "2021"
 [dependencies]
 aoc-parse = "0.2.18"
 colored = "2.1.0"
+num = "0.4.3"
 rayon = "1.10.0"
