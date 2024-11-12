@@ -60,15 +60,17 @@ fn build_expression<const BRACKET_ADDITIONS: bool>(mut symbols: Vec<RawSymbol>) 
         bracket_additions(&mut symbols);
     }
 
-    if symbols.len() == 1 {
-        return match symbols.pop().unwrap() {
+    if symbols.len() <= 1 {
+        return match symbols.pop().expect("Cannot build an empty expression") {
             RawSymbol::Integer(n) => Expression::Integer(n),
             RawSymbol::Bracketed(bracketed_symbols) => {
                 build_expression::<BRACKET_ADDITIONS>(bracketed_symbols)
             }
-            _ => unreachable!(),
+            _ => panic!("An operation without operands is not an expression"),
         };
     }
+
+    // If we reach here then symbols was length at least 2
 
     let right_operand = symbols.pop().unwrap();
     let right_operand = match right_operand {
@@ -76,19 +78,20 @@ fn build_expression<const BRACKET_ADDITIONS: bool>(mut symbols: Vec<RawSymbol>) 
         RawSymbol::Bracketed(bracketed_symbols) => {
             build_expression::<BRACKET_ADDITIONS>(bracketed_symbols)
         }
-        _ => unreachable!(),
+        _ => panic!("Symbols ended with an operation that has no right operand"),
     };
     let right_operand = Box::new(right_operand);
 
     let operation = symbols.pop().unwrap();
 
+    // LHS is fully evaluated first
     let left_operand = build_expression::<BRACKET_ADDITIONS>(symbols);
     let left_operand = Box::new(left_operand);
 
     match operation {
         RawSymbol::Multiply => Expression::Product(left_operand, right_operand),
         RawSymbol::Add => Expression::Sum(left_operand, right_operand),
-        _ => unreachable!(),
+        _ => panic!("Expressions must be separated by operations"),
     }
 }
 
