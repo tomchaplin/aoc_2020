@@ -1,4 +1,4 @@
-use std::{fmt::Display, iter};
+use std::iter;
 
 use crate::ProblemSolution;
 #[allow(unused_imports)]
@@ -44,7 +44,6 @@ fn position_to_idx<const N: usize>(position: &[usize; N], bounds: &[usize; N]) -
 
 fn idx_to_position<const N: usize>(mut idx: usize, bounds: &[usize; N]) -> [usize; N] {
     let mut position = vec![];
-    //let starting_idx = idx;
     for i in 0..N {
         let slice_size: usize = bounds[(i + 1)..N].iter().product();
         let slice_idx = idx / slice_size;
@@ -59,6 +58,8 @@ impl<const N: usize> PocketDimension<N> {
         is_valid_pos(pos, &self.bounds)
     }
 
+    // TODO: Maybe check whether a pad is actually required
+    //       We only need to pad if there is some Active state on the outer shell
     // Wrap pocket dimension in a shell of Inactive
     fn pad(&mut self) {
         let new_bounds = self.bounds.clone().map(|b| b + 2);
@@ -88,11 +89,6 @@ impl<const N: usize> PocketDimension<N> {
         idx_to_position(idx, &self.bounds)
     }
 
-    fn set_pos(&mut self, position: [usize; N], state: State) {
-        let idx = self.position_to_idx(&position);
-        self.states[idx] = state;
-    }
-
     fn at_pos(&self, position: [usize; N]) -> PocketDimensionPosition<'_, N> {
         PocketDimensionPosition {
             dimension: self,
@@ -100,7 +96,8 @@ impl<const N: usize> PocketDimension<N> {
         }
     }
 
-    fn update_into(&self, other: &mut Self) {
+    fn produce_update(&self) -> Self {
+        let mut next_states = vec![];
         for idx in 0..(self.states.len()) {
             let pos = self.idx_to_position(idx);
             let pos_ref = self.at_pos(pos.clone());
@@ -114,7 +111,11 @@ impl<const N: usize> PocketDimension<N> {
                 (Inactive, 3) => Active,
                 (_, _) => Inactive,
             };
-            other.set_pos(pos, next_state);
+            next_states.push(next_state)
+        }
+        Self {
+            states: next_states,
+            bounds: self.bounds,
         }
     }
 
@@ -186,34 +187,24 @@ fn parse_input<const N: usize>(input: &str) -> PocketDimension<N> {
     }
 }
 
+// N is the number of dimensions (3 for part a, 4 for part b)
+fn solve<const N: usize>(input: &str) -> usize {
+    let mut pocket_dimension = parse_input::<N>(input);
+
+    for _ in 0..6 {
+        pocket_dimension.pad();
+        pocket_dimension = pocket_dimension.produce_update();
+    }
+
+    pocket_dimension.n_active()
+}
+
 impl ProblemSolution for Solution {
     fn solve_a(&self, input: &str) -> Option<String> {
-        let mut dim_1 = parse_input::<3>(input);
-        let mut dim_2 = dim_1.clone();
-
-        for _ in 0..6 {
-            dim_1.pad();
-            dim_2.pad();
-            dim_1.update_into(&mut dim_2);
-            std::mem::swap(&mut dim_1, &mut dim_2);
-        }
-
-        let answer = dim_1.n_active();
-        Some(answer.to_string())
+        Some(solve::<3>(input).to_string())
     }
 
     fn solve_b(&self, input: &str) -> Option<String> {
-        let mut dim_1 = parse_input::<4>(input);
-        let mut dim_2 = dim_1.clone();
-
-        for _ in 0..6 {
-            dim_1.pad();
-            dim_2.pad();
-            dim_1.update_into(&mut dim_2);
-            std::mem::swap(&mut dim_1, &mut dim_2);
-        }
-
-        let answer = dim_1.n_active();
-        Some(answer.to_string())
+        Some(solve::<4>(input).to_string())
     }
 }
