@@ -15,7 +15,6 @@ enum ABChar {
 enum RawRule {
     MatchChar(ABChar),
     MatchRuleSequences(Vec<Vec<usize>>),
-    Alias(usize),
 }
 
 #[derive(Debug)]
@@ -48,7 +47,6 @@ impl<'a> Rule<'a> {
                     return HashSet::default();
                 }
             }
-            RawRule::Alias(idx) => self.rule_set.rule(*idx).matches(word),
             RawRule::MatchRuleSequences(rule_sequences) => rule_sequences
                 .iter()
                 .flat_map(|rule_sequence| {
@@ -98,7 +96,6 @@ fn parse_input(input: &str) -> (RuleSet, Vec<Vec<ABChar>>) {
     let rule_parser = parser!(
         idx:usize ": " raw_rule:{
             any_char c:abchar any_char  => RawRule::MatchChar(c),
-            idx:usize => RawRule::Alias(idx),
             rules:repeat_sep(repeat_sep(usize, " "), " | ")
             => RawRule::MatchRuleSequences(rules),
         }
