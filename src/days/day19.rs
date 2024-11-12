@@ -3,6 +3,7 @@ use std::collections::{HashMap, HashSet};
 use crate::ProblemSolution;
 #[allow(unused_imports)]
 use aoc_parse::{parser, prelude::*};
+use itertools::Itertools;
 pub struct Solution {}
 
 #[derive(Debug, PartialEq, Eq)]
@@ -38,6 +39,9 @@ struct Rule<'a> {
 
 impl<'a> Rule<'a> {
     fn matches(&self, word: &[ABChar]) -> HashSet<usize> {
+        if word.len() == 0 {
+            return HashSet::default();
+        }
         let raw_rule = self.rule_set.rules.get(&self.idx).unwrap();
         match raw_rule {
             RawRule::MatchChar(abchar) => {
@@ -129,6 +133,17 @@ impl ProblemSolution for Solution {
     }
 
     fn solve_b(&self, input: &str) -> Option<String> {
-        None
+        let new_lines = input.lines().map(|line| {
+            if line.starts_with("8:") {
+                "8: 42 | 42 8"
+            } else if line.starts_with("11:") {
+                "11: 42 31 | 42 11 31"
+            } else {
+                line
+            }
+        });
+        let new_input: String = Itertools::intersperse(new_lines, "\n").collect();
+
+        self.solve_a(&new_input)
     }
 }
