@@ -38,13 +38,16 @@ struct Rule<'a> {
 }
 
 impl<'a> Rule<'a> {
-    fn matches(&self, word: &[ABChar]) -> HashSet<usize> {
+    // Each element of the returned set is a possible number of characters that could be matched
+    // by the rule
+    fn match_lengths(&self, word: &[ABChar]) -> HashSet<usize> {
         if word.len() == 0 {
             return HashSet::default();
         }
         let raw_rule = self.rule_set.rules.get(&self.idx).unwrap();
         match raw_rule {
             RawRule::MatchChar(abchar) => {
+                // Base case
                 if word.len() >= 1 && word[0] == *abchar {
                     return HashSet::from([1]);
                 } else {
@@ -54,39 +57,47 @@ impl<'a> Rule<'a> {
             RawRule::MatchRuleSequences(rule_sequences) => rule_sequences
                 .iter()
                 .flat_map(|rule_sequence| {
-                    let artificial_rule = ArtificialRuleSequence {
+                    // Each rule sequence is checked individually and then merged
+                    let rule_sequence = RuleSequence {
                         rule_set: &self.rule_set,
                         sequence: &rule_sequence,
                     };
-                    artificial_rule.matches(word).into_iter()
+                    rule_sequence.match_lengths(word).into_iter()
                 })
                 .collect(),
         }
     }
+
+    fn fully_matches(&self, word: &[ABChar]) -> bool {
+        self.match_lengths(word).contains(&word.len())
+    }
 }
 
 // Quick wrapper to enable recursive checking of a sequence of rules
-struct ArtificialRuleSequence<'a> {
+// that must match one after the other
+struct RuleSequence<'a> {
     rule_set: &'a RuleSet,
     sequence: &'a [usize],
 }
 
-impl<'a> ArtificialRuleSequence<'a> {
-    fn matches(&self, word: &[ABChar]) -> HashSet<usize> {
+impl<'a> RuleSequence<'a> {
+    // Each element of the returned set is a possible number of characters that could be matched
+    // by the rule sequence
+    fn match_lengths(&self, word: &[ABChar]) -> HashSet<usize> {
         if self.sequence.len() == 1 {
-            self.rule_set.rule(self.sequence[0]).matches(word)
+            self.rule_set.rule(self.sequence[0]).match_lengths(word)
         } else {
             let first_rule = self.rule_set.rule(self.sequence[0]);
-            let rest_of_seq = ArtificialRuleSequence {
+            let rest_of_seq = RuleSequence {
                 rule_set: self.rule_set,
                 sequence: &self.sequence[1..],
             };
             first_rule
-                .matches(word)
+                .match_lengths(word)
                 .into_iter()
                 .flat_map(|n_first_matches| {
                     rest_of_seq
-                        .matches(&word[n_first_matches..])
+                        .match_lengths(&word[n_first_matches..])
                         .into_iter()
                         .map(move |n_rest_matches| n_first_matches + n_rest_matches)
                 })
@@ -124,10 +135,7 @@ impl ProblemSolution for Solution {
         let rule_0 = rule_set.rule(0);
         let words_matching_0 = words
             .into_iter()
-            .filter(|word| {
-                let matches = rule_0.matches(word);
-                matches.contains(&word.len())
-            })
+            .filter(|word| rule_0.fully_matches(word))
             .count();
         Some(words_matching_0.to_string())
     }
